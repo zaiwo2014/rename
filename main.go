@@ -27,9 +27,9 @@ func doCommand(args []string) {
 	if to[0] == '.' {
 		doRenameExt(from, to)
 	} else if to[0] == ':' {
-		doTransform(from, to)
+		doTransform(from, to, args)
 	} else {
-		doRename(from, to)
+		doCommonRename(from, to)
 	}
 
 }
@@ -42,29 +42,19 @@ func doRenameExt(from string, to string) {
 
 	newName := dir + "/" + part + to
 
-	err := os.Rename(from, newName)
-
-	if err != nil {
-		fmt.Println("Err:", err)
-		os.Exit(1)
-	}
+	doRename(from, newName)
 }
 
-func doRename(from string, to string) {
+func doCommonRename(from string, to string) {
 	//源文件目录
 	dir := path.Dir(from)
 
 	newName := dir + "/" + to
 
-	err := os.Rename(from, newName)
-
-	if err != nil {
-		fmt.Println("Err:", err)
-		os.Exit(2)
-	}
+	doRename(from, newName)
 }
 
-func doTransform(from string, to string) {
+func doTransform(from string, to string, args []string) {
 	options := strings.Split(to, ":")[1]
 	var targetName string
 	switch options {
@@ -72,6 +62,12 @@ func doTransform(from string, to string) {
 		targetName = strings.ToUpper(strings.Split(path.Base(from), ".")[0])
 	case "lower":
 		targetName = strings.ToLower(strings.Split(path.Base(from), ".")[0])
+	case "plus":
+		if len(args) == 3 {
+			targetName = strings.Split(path.Base(from), ".")[0] + args[2]
+		} else {
+			os.Exit(1)
+		}
 	default:
 		fmt.Println("Err:", "Command does not exist in options")
 		os.Exit(1)
@@ -79,13 +75,18 @@ func doTransform(from string, to string) {
 
 	newName := path.Dir(from) + "/" + targetName + path.Ext(from)
 
+	doRename(from, newName)
+
+}
+
+func doRename(from string, newName string) {
+
 	err := os.Rename(from, newName)
 
 	if err != nil {
 		fmt.Println("Err:", err)
 		os.Exit(1)
 	}
-
 }
 
 func showHelp() {
